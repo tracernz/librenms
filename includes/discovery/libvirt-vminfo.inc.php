@@ -72,7 +72,7 @@ if (Config::get('enable_libvirt') && $device['os'] == 'linux') {
                     $vmwVmGuestOS     = '';
                     // libvirt does not supply this
                     exec(Config::get('virsh').' -rc '.$uri.' domstate '.$dom_id, $vm_state);
-                    $vmwVmState = ucfirst($vm_state[0]);
+                    $vmwVmState = strtolower($vm_state[0]);
 
                     $vmwVmCpus  = $xml->vcpu['current'];
                     if (!isset($vmwVmCpus)) {
