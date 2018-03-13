@@ -33,7 +33,7 @@ if (Config::get('enable_libvirt') && $device['os'] == 'linux') {
         if ($ssh_ok || !str_contains($method, 'ssh')) {
             // Fetch virtual machine list
             unset($domlist);
-            exec(Config::get('virsh').' -rc '.$uri.' list --uuid', $domlist);
+            exec(Config::get('virsh').' -rc '.$uri.' list --uuid --all', $domlist);
 
             foreach ($domlist as $dom) {
                 $dom_id = trim($dom);
