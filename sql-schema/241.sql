@@ -1,0 +1,2 @@
+ALTER TABLE `vminfo` ADD COLUMN `vmwVmUUID` char(36), ADD INDEX(`vmwVmUUID`);
+ALTER TABLE `vminfo` DROP COLUMN `vmwVmVMID`;

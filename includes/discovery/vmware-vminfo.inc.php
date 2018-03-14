@@ -28,6 +28,7 @@ if (($device['os'] == 'vmware') || ($device['os'] == 'linux')) {
         $vmwVmMemSize     = $entry['vmwVmMemSize'];
         $vmwVmState       = $entry['vmwVmState'];
         $vmwVmCpus        = $entry['vmwVmCpus'];
+        $vmwVmUUID        = $entry['vmwVmUUID'];
 
         /*
          * VMware does not return an INTEGER but a STRING of the vmwVmMemSize. This bug
@@ -40,8 +41,8 @@ if (($device['os'] == 'vmware') || ($device['os'] == 'linux')) {
         /*
          * Check whether the Virtual Machine is already known for this host.
          */
-        if (dbFetchCell("SELECT COUNT(id) FROM `vminfo` WHERE `device_id` = ? AND `vmwVmVMID` = ? AND vm_type='vmware'", array($device['device_id'], $index)) == 0) {
-            $vmid = dbInsert(array('device_id' => $device['device_id'], 'vm_type' => 'vmware', 'vmwVmVMID' => $index, 'vmwVmDisplayName' => mres($vmwVmDisplayName), 'vmwVmGuestOS' => mres($vmwVmGuestOS), 'vmwVmMemSize' => mres($vmwVmMemSize), 'vmwVmCpus' => mres($vmwVmCpus), 'vmwVmState' => mres($vmwVmState)), 'vminfo');
+        if (dbFetchCell("SELECT COUNT(id) FROM `vminfo` WHERE `device_id` = ? AND `vmwVmUUID` = ? AND vm_type='vmware'", array($device['device_id'], mres($vmwVmUUID))) == 0) {
+            $vmid = dbInsert(array('device_id' => $device['device_id'], 'vm_type' => 'vmware', 'vmwVmUUID' => mres($vmwVmUUID), 'vmwVmDisplayName' => mres($vmwVmDisplayName), 'vmwVmGuestOS' => mres($vmwVmGuestOS), 'vmwVmMemSize' => mres($vmwVmMemSize), 'vmwVmCpus' => mres($vmwVmCpus), 'vmwVmState' => mres($vmwVmState)), 'vminfo');
             log_event(mres($vmwVmDisplayName) . " ($vmwVmMemSize GB / $vmwVmCpus vCPU) Discovered", $device, 'system', 3, $vmid);
             echo '+';
             // FIXME eventlog
@@ -53,23 +54,23 @@ if (($device['os'] == 'vmware') || ($device['os'] == 'linux')) {
          * Save the discovered Virtual Machine.
          */
 
-        $vmw_vmlist[] = $index;
+        $vmw_vmlist[] = $vmwVmUUID;
     }
 
     /*
      * Get a list of all the known Virtual Machines for this host.
      */
 
-    $sql = "SELECT id, vmwVmVMID, vmwVmDisplayName FROM vminfo WHERE device_id = '".$device['device_id']."' AND vm_type='vmware'";
+    $sql = "SELECT id, vmwVmUUID, vmwVmDisplayName FROM vminfo WHERE device_id = '".$device['device_id']."' AND vm_type='vmware'";
 
     foreach (dbFetchRows($sql) as $db_vm) {
         /*
          * Delete the Virtual Machines that are removed from the host.
          */
 
-        if (!in_array($db_vm['vmwVmVMID'], $vmw_vmlist)) {
+        if (!in_array($db_vm['vmwVmUUID'], $vmw_vmlist)) {
             dbDelete('vminfo', '`id` = ?', array($db_vm['id']));
-            log_event(mres($db_vm['vmwVmDisplayName']) . ' Removed', $device, 'system', 4, $db_vm['vmwVmVMID']);
+            log_event(mres($db_vm['vmwVmDisplayName']) . ' Removed', $device, 'system', 4, $db_vm['id']);
             echo '-';
             // FIXME eventlog
         }

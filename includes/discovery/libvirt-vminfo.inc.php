@@ -33,12 +33,12 @@ if (Config::get('enable_libvirt') && $device['os'] == 'linux') {
         if ($ssh_ok || !str_contains($method, 'ssh')) {
             // Fetch virtual machine list
             unset($domlist);
-            exec(Config::get('virsh').' -rc '.$uri.' list', $domlist);
+            exec(Config::get('virsh').' -rc '.$uri.' list --uuid', $domlist);
 
             foreach ($domlist as $dom) {
-                list($dom_id,) = explode(' ', trim($dom), 2);
+                $dom_id = trim($dom);
 
-                if (is_numeric($dom_id)) {
+                if (strlen($dom_id) == 36) {
                     // Fetch the Virtual Machine information.
                     unset($vm_info_array);
                     exec(Config::get('virsh').' -rc '.$uri.' dumpxml '.$dom_id, $vm_info_array);
@@ -115,9 +115,9 @@ if (Config::get('enable_libvirt') && $device['os'] == 'linux') {
                     }
 
                     // Check whether the Virtual Machine is already known for this host.
-                    $result = dbFetchRow("SELECT * FROM `vminfo` WHERE `device_id` = ? AND `vmwVmVMID` = ? AND `vm_type` = 'libvirt'", array($device['device_id'], $dom_id));
+                    $result = dbFetchRow("SELECT * FROM `vminfo` WHERE `device_id` = ? AND `vmwVmUUID` = ? AND `vm_type` = 'libvirt'", array($device['device_id'], $dom_id));
                     if (count($result['device_id']) == 0) {
-                        $inserted_id = dbInsert(array('device_id' => $device['device_id'], 'vm_type' => 'libvirt', 'vmwVmVMID' => $dom_id, 'vmwVmDisplayName' => mres($vmwVmDisplayName), 'vmwVmGuestOS' => mres($vmwVmGuestOS), 'vmwVmMemSize' => mres($vmwVmMemSize), 'vmwVmCpus' => mres($vmwVmCpus), 'vmwVmState' => mres($vmwVmState)), 'vminfo');
+                        $inserted_id = dbInsert(array('device_id' => $device['device_id'], 'vm_type' => 'libvirt', 'vmwVmUUID' => $dom_id, 'vmwVmDisplayName' => mres($vmwVmDisplayName), 'vmwVmGuestOS' => mres($vmwVmGuestOS), 'vmwVmMemSize' => mres($vmwVmMemSize), 'vmwVmCpus' => mres($vmwVmCpus), 'vmwVmState' => mres($vmwVmState)), 'vminfo');
                         echo '+';
                         log_event("Virtual Machine added: $vmwVmDisplayName ($vmwVmMemSize MB)", $device, 'vm', 3, $inserted_id);
                     } else {
@@ -127,7 +127,7 @@ if (Config::get('enable_libvirt') && $device['os'] == 'linux') {
                             || $result['vmwVmGuestOS'] != $vmwVmGuestOS
                             || $result['vmwVmMemSize'] != $vmwVmMemSize
                         ) {
-                            dbUpdate(array('vmwVmState' => mres($vmwVmState), 'vmwVmGuestOS' => mres($vmwVmGuestOS), 'vmwVmDisplayName' => mres($vmwVmDisplayName), 'vmwVmMemSize' => mres($vmwVmMemSize), 'vmwVmCpus' => mres($vmwVmCpus)), 'vminfo', "device_id=? AND vm_type='libvirt' AND vmwVmVMID=?", array($device['device_id'], $dom_id));
+                            dbUpdate(array('vmwVmState' => mres($vmwVmState), 'vmwVmGuestOS' => mres($vmwVmGuestOS), 'vmwVmDisplayName' => mres($vmwVmDisplayName), 'vmwVmMemSize' => mres($vmwVmMemSize), 'vmwVmCpus' => mres($vmwVmCpus)), 'vminfo', "device_id=? AND vm_type='libvirt' AND vmwVmUUID=?", array($device['device_id'], $dom_id));
                             echo 'U';
                             // FIXME eventlog
                         } else {
@@ -148,11 +148,11 @@ if (Config::get('enable_libvirt') && $device['os'] == 'linux') {
     }//end foreach
 
     // Get a list of all the known Virtual Machines for this host.
-    $sql = "SELECT id, vmwVmVMID, vmwVmDisplayName FROM vminfo WHERE device_id = '".$device['device_id']."' AND vm_type='libvirt'";
+    $sql = "SELECT id, vmwVmUUID, vmwVmDisplayName FROM vminfo WHERE device_id = '".$device['device_id']."' AND vm_type='libvirt'";
 
     foreach (dbFetchRows($sql) as $db_vm) {
         // Delete the Virtual Machines that are removed from the host.
-        if (!in_array($db_vm['vmwVmVMID'], $libvirt_vmlist)) {
+        if (!in_array($db_vm['vmwVmUUID'], $libvirt_vmlist)) {
             dbDelete('vminfo', '`id` = ?', array($db_vm['id']));
             echo '-';
             log_event('Virtual Machine removed: ' . $db_vm['vmwVmDisplayName'], $device, 'vm', 4, $db_vm['id']);

@@ -43,30 +43,33 @@ echo 'VMware VM: ';
 
 /*
  * Get a list of all the known Virtual Machines for this host.
+ * TODO: track VMs that migrate to another host (vmwVmUUID will stick)?
  */
 
-$db_info_list = dbFetchRows('SELECT id, vmwVmVMID, vmwVmDisplayName, vmwVmGuestOS, vmwVmMemSize, vmwVmCpus, vmwVmState FROM vminfo WHERE device_id = ?', array($device['device_id']));
+$db_info_list = dbFetchRows('SELECT id, vmwVmUUID, vmwVmDisplayName, vmwVmGuestOS, vmwVmMemSize, vmwVmCpus, vmwVmState FROM vminfo WHERE device_id = ?', array($device['device_id']));
 $current_vminfo = snmpwalk_cache_multi_oid($device, 'vmwVmTable', array(), '+VMWARE-ROOT-MIB:VMWARE-VMINFO-MIB', 'vmware');
 
 foreach ($db_info_list as $db_info) {
     /*
      * Fetch the Virtual Machine information.
-     *
-     *  VMWARE-VMINFO-MIB::vmwVmDisplayName.224 = STRING: My First VM
-     *  VMWARE-VMINFO-MIB::vmwVmGuestOS.224 = STRING: windows7Server64Guest
-     *  VMWARE-VMINFO-MIB::vmwVmMemSize.224 = INTEGER: 8192 megabytes
-     *  VMWARE-VMINFO-MIB::vmwVmState.224 = STRING: poweredOn
-     *  VMWARE-VMINFO-MIB::vmwVmVMID.224 = INTEGER: 224
-     *  VMWARE-VMINFO-MIB::vmwVmCpus.224 = INTEGER: 2
      */
 
     $vm_info = array();
 
-    $vm_info['vmwVmDisplayName'] = $current_vminfo[$db_info['vmwVmVMID']]['vmwVmDisplayName'];
-    $vm_info['vmwVmGuestOS']     = $current_vminfo[$db_info['vmwVmVMID']]['vmwVmGuestOS'];
-    $vm_info['vmwVmMemSize']     = $current_vminfo[$db_info['vmwVmVMID']]['vmwVmMemSize'];
-    $vm_info['vmwVmState']       = $current_vminfo[$db_info['vmwVmVMID']]['vmwVmState'];
-    $vm_info['vmwVmCpus']        = $current_vminfo[$db_info['vmwVmVMID']]['vmwVmCpus'];
+    foreach ($current_vminfo as $candidate) {
+        if ($candidate['vmwVmUUID'] == $db_info['vmwVmUUID']) {
+            $vm_info['vmwVmDisplayName'] = $candidate['vmwVmDisplayName'];
+            $vm_info['vmwVmGuestOS']     = $candidate['vmwVmGuestOS'];
+            $vm_info['vmwVmMemSize']     = $candidate['vmwVmMemSize'];
+            $vm_info['vmwVmState']       = $candidate['vmwVmState'];
+            $vm_info['vmwVmCpus']        = $candidate['vmwVmCpus'];
+        }
+    }
+
+    if (!array_key_exists('vmwVmDisplayName', $vm_info)) {
+        // Oh no, VM disappeared... or SNMP failed..
+        continue;
+    }
 
     /*
      * VMware does not return an INTEGER but a STRING of the vmwVmMemSize. This bug
