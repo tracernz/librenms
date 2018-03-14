@@ -47,7 +47,7 @@ echo 'VMware VM: ';
  */
 
 $db_info_list = dbFetchRows('SELECT id, vmwVmUUID, vmwVmDisplayName, vmwVmGuestOS, vmwVmMemSize, vmwVmCpus, vmwVmState FROM vminfo WHERE device_id = ?', array($device['device_id']));
-$current_vminfo = snmpwalk_cache_multi_oid($device, 'vmwVmTable', array(), '+VMWARE-ROOT-MIB:VMWARE-VMINFO-MIB', 'vmware');
+$current_vminfo = snmpwalk_cache_multi_oid($device, 'vmwVmTable', array(), 'VMWARE-ROOT-MIB:VMWARE-VMINFO-MIB', 'vmware');
 
 foreach ($db_info_list as $db_info) {
     /*
