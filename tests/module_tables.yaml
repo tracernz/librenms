@@ -50,3 +50,13 @@ storage:
 wireless:
     wireless_sensors:
         excluded_fields: [device_id, sensor_id, access_point_id, lastupdate]
+
+libvirt-vminfo:
+    vminfo:
+        excluded_fields: [id, device_id]
+        order_by: vmwVmUUID
+
+vmware-vminfo:
+    vminfo:
+        excluded_fields: [id, device_id]
+        order_by: vmwVmUUID
