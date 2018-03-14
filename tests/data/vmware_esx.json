@@ -1,0 +1,36 @@
+{
+    "vmware-vminfo": {
+        "discovery": {
+            "vminfo": [
+                {
+                    "vm_type": "vmware",
+                    "vmwVmDisplayName": "pausy",
+                    "vmwVmGuestOS": "E: tools not installed",
+                    "vmwVmMemSize": "256",
+                    "vmwVmCpus": "1",
+                    "vmwVmState": "suspended",
+                    "vmwVmUUID": "564da5ea-943c-023c-6751-5d6287b8c6fd"
+                },
+                {
+                    "vm_type": "vmware",
+                    "vmwVmDisplayName": "testvm",
+                    "vmwVmGuestOS": "",
+                    "vmwVmMemSize": "1024",
+                    "vmwVmCpus": "1",
+                    "vmwVmState": "powered on",
+                    "vmwVmUUID": "564dbcf4-b673-ffdc-43eb-3b4fcb162612"
+                },
+                {
+                    "vm_type": "vmware",
+                    "vmwVmDisplayName": "stoppy",
+                    "vmwVmGuestOS": "E: tools not installed",
+                    "vmwVmMemSize": "512",
+                    "vmwVmCpus": "1",
+                    "vmwVmState": "powered off",
+                    "vmwVmUUID": "564df76f-4806-fae0-0ed1-851f58690677"
+                }
+            ]
+        },
+        "poller": "matches discovery"
+    }
+}
